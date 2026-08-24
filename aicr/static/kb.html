@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识库 - 智能代码审查助手</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand"><span class="logo">R</span> 智能代码审查助手 <span class="ver">v2 Python</span></a>
+    <div class="nav-links">
+      <a href="/">代码审查</a>
+      <a href="/chat.html">对话</a>
+      <a href="/kb.html" class="active">知识库</a>
+      <a href="/#history">运行记录</a>
+      <a href="/settings.html">设置</a>
+    </div>
+    <div class="nav-right">
+      <span id="statusChip" class="status-chip"><span class="dot"></span><span id="statusText">检测中</span></span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="page-title">知识库（RAG 上下文）</h1>
+    <p class="page-sub">把项目文档、编码规范、架构说明和代码摄入向量库，审查时自动检索并注入项目专属上下文，让反馈贴合你的规范。</p>
+
+    <div class="card">
+      <div class="card-title">知识库状态</div>
+      <div id="kbStats"><div class="empty"><div class="big">📚</div>加载中…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">摄入内容</div>
+      <div class="settings-row">
+        <label>目录 / 文件路径</label>
+        <input type="text" id="ingestPath" placeholder="如 D:\projects\demo（含 README.md、docs/、源码）">
+      </div>
+      <div class="settings-row">
+        <label>分块大小（字符）</label>
+        <input type="number" id="chunkSize" min="200" max="4000" step="100" value="800">
+      </div>
+      <div class="settings-row">
+        <label><input type="checkbox" id="recreate"> 摄入前先清空现有知识库</label>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnIngest">开始摄入</button>
+      </div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div id="loadingText">正在向量化并入库（首次需下载 embedding 模型，可能较慢）...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">语义检索</div>
+      <div class="settings-row">
+        <label>查询内容</label>
+        <input type="text" id="searchQuery" placeholder="如：数据库访问层规范、密码加密要求">
+      </div>
+      <div class="settings-row">
+        <label>返回条数</label>
+        <input type="number" id="searchK" min="1" max="20" value="5">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSearch">检索</button>
+        <button class="btn btn-ghost" id="btnClear">清空知识库</button>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">使用说明</div>
+      <ul class="recommendations">
+        <li>先在 <a href="/settings.html">设置</a> 中开启「启用知识库」并配置向量库与 embedding 模型。</li>
+        <li>推荐摄入项目根目录：会收集 <code>README.md</code>、<code>docs/</code>、<code>*.md</code> 及源码文件。</li>
+        <li>embedding 使用本地 <code>sentence-transformers</code>，首次运行会下载模型（约 470MB）。</li>
+        <li>向量库默认本地内嵌（无需 Docker）；也可在设置中填写 Qdrant 服务地址接入 Docker / Qdrant Cloud。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/kb.js"></script>
+</body>
+</html>

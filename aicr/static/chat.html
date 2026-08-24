@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>对话 - 智能代码审查助手</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand"><span class="logo">R</span> 智能代码审查助手 <span class="ver">v2 Python</span></a>
+    <div class="nav-links">
+      <a href="/">代码审查</a>
+      <a href="/chat.html" class="active">对话</a>
+      <a href="/kb.html">知识库</a>
+      <a href="/#history">运行记录</a>
+      <a href="/settings.html">设置</a>
+    </div>
+    <div class="nav-right">
+      <span id="statusChip" class="status-chip"><span class="dot"></span><span id="statusText">检测中</span></span>
+    </div>
+  </nav>
+
+  <div class="container chat-container">
+    <h1 class="page-title">多轮对话</h1>
+    <p class="page-sub">基于当前 Provider 的上下文对话，支持思考型模型（可展开查看思考过程）</p>
+
+    <div class="card chat-card">
+      <div id="chatLog" class="chat-log"></div>
+
+      <div id="thinking" class="chat-thinking" style="display:none">
+        <div class="chat-thinking-head" id="thinkingToggle">
+          <span id="thinkingLabel">思考中…</span><span class="chevron">▼</span>
+        </div>
+        <div class="chat-thinking-body" id="thinkingBody"></div>
+      </div>
+
+      <div class="chat-input-row">
+        <textarea id="chatInput" class="chat-input" placeholder="输入消息，回车发送（Shift+Enter 换行）…" rows="2"></textarea>
+        <div class="chat-actions">
+          <button class="btn btn-primary" id="btnSend">发送</button>
+          <button class="btn btn-ghost" id="btnReset">新对话</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/chat.js"></script>
+</body>
+</html>

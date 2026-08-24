@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置 - 智能代码审查助手</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand"><span class="logo">R</span> 智能代码审查助手 <span class="ver">v2 Python</span></a>
+    <div class="nav-links">
+      <a href="/">代码审查</a>
+      <a href="/chat.html">对话</a>
+      <a href="/kb.html">知识库</a>
+      <a href="/#history">运行记录</a>
+      <a href="/settings.html" class="active">设置</a>
+    </div>
+    <div class="nav-right">
+      <span id="statusChip" class="status-chip"><span class="dot"></span><span id="statusText">检测中</span></span>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="page-title">系统设置</h1>
+    <p class="page-sub">配置优先级：请求参数 &gt; .env &gt; 环境变量 &gt; 此页面（config.json）&gt; 默认值</p>
+
+    <div class="card">
+      <div class="card-title">模型 Provider</div>
+
+      <div class="settings-row">
+        <label>当前 Provider</label>
+        <select id="provider"></select>
+      </div>
+
+      <div id="providerSections"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSave">保存配置</button>
+        <button class="btn btn-ghost" id="btnTest">测试连接</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">审查参数</div>
+      <div class="settings-row">
+        <label>温度 temperature</label>
+        <div class="hint">越低越严谨稳定，越高越有创造性。</div>
+        <div class="range-row">
+          <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.3">
+          <span class="val" id="tempVal">0.3</span>
+        </div>
+      </div>
+      <div class="settings-row">
+        <label>最大输出 Token 数</label>
+        <input type="number" id="max_tokens" min="512" max="8192" step="512">
+      </div>
+      <div class="settings-row">
+        <label>请求超时（毫秒）</label>
+        <input type="number" id="timeout_ms" min="5000" step="5000">
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" id="btnSaveParams">保存参数</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">知识库 / RAG</div>
+      <div class="settings-row">
+        <label><input type="checkbox" id="kb_enabled"> 启用知识库（审查时检索并注入项目上下文）</label>
+      </div>
+      <div class="settings-row">
+        <label>Qdrant 服务地址（可选）</label>
+        <input type="text" id="kb_qdrant_url" placeholder="留空则使用本地内嵌（无需 Docker）">
+      </div>
+      <div class="settings-row">
+        <label>Qdrant API Key</label>
+        <input type="password" id="kb_qdrant_api_key" autocomplete="off" placeholder="仅远程服务需要">
+      </div>
+      <div class="settings-row">
+        <label>集合名称 collection</label>
+        <input type="text" id="kb_collection" placeholder="aicr_kb">
+      </div>
+      <div class="settings-row">
+        <label>Embedding 模型</label>
+        <input type="text" id="kb_embedding_model" placeholder="paraphrase-multilingual-MiniLM-L12-v2">
+      </div>
+      <div class="settings-row">
+        <label>检索条数 top_k</label>
+        <input type="number" id="kb_top_k" min="1" max="20">
+      </div>
+      <div class="settings-row">
+        <label>分块大小（字符）</label>
+        <input type="number" id="kb_chunk_size" min="200" max="4000" step="100">
+      </div>
+      <div class="settings-row">
+        <label>分块重叠（字符）</label>
+        <input type="number" id="kb_chunk_overlap" min="0" max="1000" step="50">
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" id="btnSaveKb">保存知识库配置</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">使用说明</div>
+      <ul class="recommendations">
+        <li>推荐在项目根目录创建 <code>.env</code>（参考 .env.example），优先级高于本页设置。</li>
+        <li>Ollama 为本地模型，无需 API Key，先执行 <code>ollama pull qwen2.5-coder:7b</code>。</li>
+        <li>CLI 用法：<code>aicr review 目录/文件</code>、<code>aicr diff 仓库路径 --staged</code>。</li>
+        <li>每次审查的完整请求与报告都会落盘到 <code>data/runs/&lt;run_id&gt;/</code>（meta.json / trace.jsonl / report.json）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/js/settings.js"></script>
+</body>
+</html>

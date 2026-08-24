@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aicr"
+version = "2.0.0"
+description = "智能代码审查助手 —— 基于 LLM 的多维度代码审查系统（DeepSeek / OpenAI / Anthropic / Ollama）"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["code-review", "deepseek", "llm", "fastapi"]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "qdrant-client>=1.9",
+    "langgraph>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+]
+rag = [
+    "sentence-transformers>=2.6",
+]
+
+[project.scripts]
+aicr = "aicr.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aicr*"]
+
+[tool.setuptools.package-data]
+aicr = ["static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
