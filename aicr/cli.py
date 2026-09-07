@@ -120,15 +120,21 @@ def _cmd_serve(args) -> int:
 
 
 async def _cmd_review(args) -> int:
-    from .collector import CollectorError, collect_from_path
+    from .collector import CollectorError, SkippedFile, collect_from_path
     from .engine import run_review
     from .providers import ProviderError
 
+    skipped: list[SkippedFile] = []
     try:
-        items = collect_from_path(args.path, extensions=args.ext or None, max_files=args.max_files)
+        items = collect_from_path(
+            args.path, extensions=args.ext or None, max_files=args.max_files, skipped=skipped
+        )
     except CollectorError as err:
         print(f"[错误] {err}")
         return 2
+
+    for s in skipped:
+        print(f"  ⊘ 跳过 {s.path}：{s.reason}")
 
     failed = 0
     reports = []

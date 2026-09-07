@@ -38,6 +38,12 @@ class CollectedFile:
     meta: dict = field(default_factory=dict)
 
 
+@dataclass
+class SkippedFile:
+    path: str
+    reason: str
+
+
 def guess_language(filename: str | None) -> str | None:
     if not filename:
         return None
@@ -59,8 +65,12 @@ def collect_from_path(
     extensions: list[str] | None = None,
     max_files: int = 30,
     max_file_bytes: int = 100_000,
+    skipped: list[SkippedFile] | None = None,
 ) -> list[CollectedFile]:
-    """扫描目录下可审查的文本文件；path 为单个文件时直接返回。"""
+    """扫描目录下可审查的文本文件；path 为单个文件时直接返回。
+
+    跳过/超限的文件会写入 skipped（若传入），供上层向用户反馈。
+    """
     root = Path(path)
     if not root.exists():
         raise CollectorError(f"路径不存在：{root}")
@@ -85,15 +95,30 @@ def collect_from_path(
             break
 
     results: list[CollectedFile] = []
+    over_count = 0
     for f in files:
         if len(results) >= max_files:
-            break
+            over_count += 1
+            continue
+        if f.stat().st_size > max_file_bytes:
+            _add_skip(skipped, str(f), f"超过大小限制（>{max_file_bytes} 字节）")
+            continue
         code = _read_text(f, max_file_bytes)
-        if code:
-            results.append(CollectedFile(path=str(f), code=code, language=guess_language(f.name)))
+        if code is None:
+            _add_skip(skipped, str(f), "二进制文件或无法按文本解码")
+            continue
+        results.append(CollectedFile(path=str(f), code=code, language=guess_language(f.name)))
+
+    if over_count > 0:
+        _add_skip(skipped, "(目录)", f"另有 {over_count} 个文件超过数量上限（{max_files}）被跳过")
     if not results:
         raise CollectorError(f"目录中未找到可审查的代码文件：{root}")
     return results
+
+
+def _add_skip(skipped: list[SkippedFile] | None, path: str, reason: str) -> None:
+    if skipped is not None:
+        skipped.append(SkippedFile(path=path, reason=reason))
 
 
 def _read_text(p: Path, max_bytes: int) -> str | None:

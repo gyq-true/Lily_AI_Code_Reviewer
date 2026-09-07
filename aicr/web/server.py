@@ -15,6 +15,7 @@ from .. import runs
 from ..collector import (
     CollectedFile,
     CollectorError,
+    SkippedFile,
     collect_from_path,
     collect_git_diff,
     collect_single,
@@ -256,7 +257,12 @@ async def review(body: ReviewIn):
         if body.git_repo:
             items = await asyncio.to_thread(collect_git_diff, body.git_repo, staged=body.git_staged)
             results = await _run_batch(items[:5], body)
-            return results[0] if len(results) == 1 else {"batch": True, "results": results}
+            skipped = [
+                {"path": i.path, "reason": "git diff 单次审查最多 5 个文件"} for i in items[5:]
+            ]
+            if len(results) == 1 and not skipped:
+                return results[0]
+            return {"batch": True, "results": results, "skipped": skipped}
 
         raise CollectorError("请提供 code、path 或 git_repo 之一")
     except CollectorError as err:
@@ -272,8 +278,9 @@ async def review_batch(body: ReviewIn):
             # 多文件上传场景：files 数组在扩展字段中传递（见 FilesIn）
             raise CollectorError("批量接口请使用 files / path / git_repo")
 
+        skipped: list[SkippedFile] = []
         if body.path:
-            items = collect_from_path(body.path, max_files=30)
+            items = collect_from_path(body.path, max_files=30, skipped=skipped)
         elif body.git_repo:
             items = await asyncio.to_thread(collect_git_diff, body.git_repo, staged=body.git_staged)
         else:
@@ -284,6 +291,7 @@ async def review_batch(body: ReviewIn):
             "batch": True,
             "total": len(results),
             "avg_score": round(sum(r["score"] for r in results) / max(1, len(results))),
+            "skipped": [{"path": s.path, "reason": s.reason} for s in skipped],
             "results": [
                 {
                     "file": r["meta"]["filename"],
@@ -308,12 +316,20 @@ async def review_files(body: FilesIn):
     if not body.files:
         raise HTTPException(status_code=400, detail="files 不能为空")
     items = []
+    skipped: list[dict] = []
     for f in body.files[:30]:
         name = str(f.get("name") or "file")
         content = str(f.get("content") or "")
-        if not content.strip() or len(content) > MAX_CODE_CHARS:
+        if not content.strip():
+            skipped.append({"path": name, "reason": "内容为空"})
+            continue
+        if len(content) > MAX_CODE_CHARS:
+            skipped.append({"path": name, "reason": f"超过大小限制（>{MAX_CODE_CHARS} 字符）"})
             continue
         items.append(CollectedFile(path=name, code=content, language=None))
+    if len(body.files) > 30:
+        extra = len(body.files) - 30
+        skipped.append({"path": "(上传)", "reason": f"另有 {extra} 个文件超过数量上限（30）被跳过"})
     if not items:
         raise HTTPException(status_code=400, detail="没有可审查的文件内容")
     for it in items:
@@ -328,6 +344,7 @@ async def review_files(body: FilesIn):
         "batch": True,
         "total": len(results),
         "avg_score": round(sum(r["score"] for r in results) / max(1, len(results))),
+        "skipped": skipped,
         "results": [{"file": r["meta"]["filename"], **r} for r in results],
     }
 

@@ -132,7 +132,14 @@ function renderBatch(payload) {
           </div>
           <div class="batch-body"></div>
         </div>`).join('')}
-    </div>`;
+    </div>
+    ${(payload.skipped || []).length ? `
+      <div class="card" style="background:var(--bg-3);margin-top:16px">
+        <div class="card-title">已跳过文件（${payload.skipped.length} 个）</div>
+        <ul class="recommendations">
+          ${payload.skipped.map((s) => `<li><code>${escapeHtml(s.path)}</code> — ${escapeHtml(s.reason)}</li>`).join('')}
+        </ul>
+      </div>` : ''}`;
 
   $$('#resultBody .batch-file').forEach((el) => {
     const head = el.querySelector('.batch-head');

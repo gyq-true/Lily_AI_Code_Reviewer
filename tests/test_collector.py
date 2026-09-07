@@ -55,6 +55,28 @@ def test_collect_missing_path_raises(tmp_path):
         collect_from_path(tmp_path / "not-exist")
 
 
+def test_collect_directory_reports_skipped(tmp_path):
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "big.py").write_text("x" * 200_000, encoding="utf-8")
+    (tmp_path / "bin.dat").write_bytes(b"\x00\x01\x02binary")
+
+    skipped = []
+    items = collect_from_path(tmp_path, max_files=10, max_file_bytes=1000, skipped=skipped)
+    assert len(items) == 1
+    reasons = {s.path.split("\\")[-1]: s.reason for s in skipped}
+    assert "big.py" in reasons and "大小" in reasons["big.py"]
+    assert "bin.dat" in reasons and "二进制" in reasons["bin.dat"]
+
+
+def test_collect_directory_reports_count_overflow(tmp_path):
+    for i in range(5):
+        (tmp_path / f"f{i}.py").write_text(f"x{i} = 1\n", encoding="utf-8")
+    skipped = []
+    items = collect_from_path(tmp_path, max_files=2, skipped=skipped)
+    assert len(items) == 2
+    assert any("数量上限" in s.reason for s in skipped)
+
+
 SAMPLE_DIFF = """diff --git a/app/main.py b/app/main.py
 index 1111111..2222222 100644
 --- a/app/main.py

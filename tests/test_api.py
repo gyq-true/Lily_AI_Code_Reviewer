@@ -277,3 +277,13 @@ def test_kb_ingest_missing_path(client, monkeypatch):
     _patch_kb(monkeypatch)
     r = client.post("/api/kb/ingest", json={"path": "Z:/no/such/dir"})
     assert r.status_code == 404
+
+
+def test_review_batch_reports_skipped(client, tmp_path):
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "big.py").write_text("y" * 200_000, encoding="utf-8")
+    resp = client.post("/api/review/batch", json={"path": str(tmp_path)})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert any("big.py" in s["path"] for s in data["skipped"])
