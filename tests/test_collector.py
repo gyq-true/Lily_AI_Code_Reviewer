@@ -63,7 +63,8 @@ def test_collect_directory_reports_skipped(tmp_path):
     skipped = []
     items = collect_from_path(tmp_path, max_files=10, max_file_bytes=1000, skipped=skipped)
     assert len(items) == 1
-    reasons = {s.path.split("\\")[-1]: s.reason for s in skipped}
+    from pathlib import Path as _P
+    reasons = {_P(s.path).name: s.reason for s in skipped}
     assert "big.py" in reasons and "大小" in reasons["big.py"]
     assert "bin.dat" in reasons and "二进制" in reasons["bin.dat"]
 

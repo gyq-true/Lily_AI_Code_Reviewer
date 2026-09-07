@@ -38,7 +38,8 @@ def test_collect_sources_directory(tmp_path):
     (tmp_path / "node_modules" / "skip.js").write_text("junk", encoding="utf-8")
 
     docs = collect_sources(tmp_path)
-    kinds = {d.path.split("\\")[-1]: d.kind for d in docs}
+    from pathlib import Path as _P
+    kinds = {_P(d.path).name: d.kind for d in docs}
     assert kinds["README.md"] == "doc"
     assert kinds["a.py"] == "code"
     assert not any("node_modules" in d.path for d in docs)
